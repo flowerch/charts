@@ -1,37 +1,34 @@
-﻿-- Clear out any previous tournament databases.
-
+-- Clear out any previous DB.
 DROP DATABASE IF EXISTS tournament;
 
--- Create database.
-
+-- Create DB.
 CREATE DATABASE tournament;
 
 -- Connect to the DB before creating tables.
-
-\c tournament;
+\c
+ tournament;
 
 -- Create table for players.
-
-CREATE TABLE players (id serial primary key, name text);
-
--- Create table for games.
-
-CREATE TABLE matches(
-game_id serial primary key, 
-winner integer references players(id), 
-loser integer references players(id), 
-PRIMARY KEY (winner, loser)
+CREATE TABLE players (
+id serial PRIMARY KEY,
+name text NOT NULL
 );
 
--- Create view to count total matches per player.
+-- Create table for games.
+CREATE TABLE matches(
+id serial PRIMARY KEY,
+winner INT REFERENCES players(id) ON DELETE CASCADE,
+loser INT REFERENCES players(id) ON DELETE CASCADE
+);
 
+-- Create view to show standings.
 CREATE VIEW standings AS
-
-SELECT players.id, players.name, 
-
+SELECT players.id,
+players.name,
+COUNT(matches.winner = players.id) AS wins,
 COUNT(matches.*) AS games
-FROM players LEFT JOIN games
-ON players.id = games.winner OR 
-players.id = games.loser
-
-GROUP BY players.id;
+FROM players LEFT JOIN matches
+ON players.id = matches.winner OR
+players.id = matches.loser
+GROUP BY players.id, players.name
+ORDER BY wins DESC;
